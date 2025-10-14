@@ -1,0 +1,56 @@
+import supabase
+import os
+from dotenv import load_dotenv
+from datetime import datetime
+
+class SupabaseClient():
+    def __init__(self):
+        load_dotenv()
+        SUPABASE_URL = os.getenv('SUPABASE_URL')
+        SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+
+        self.supabase = supabase.create_client(SUPABASE_URL, SUPABASE_KEY)
+        
+        self.table_messages = self.supabase.table('messages')
+        self.table_services = self.supabase.table('services')
+        self.table_customers = self.supabase.table('customers')
+            
+    def upsert(self, data, schema):
+       self.supabase.table(schema).upsert(data).execute()
+    
+    def load_services(self):
+        return self.table_services.select("*").execute().data
+    
+    def search_messages(self, value):
+        return self.table_messages.select('*').eq('phone_number', value).order('inserted_at').execute().data
+    
+    def insert_msg(self, phone_number, role, msg):
+        self.upsert({
+            "phone_number": phone_number,
+            "role": role,
+            "content": msg
+        }, 'messages')
+    
+    def update_fallback_customer(self, phone_number, bool):
+        date_now = None if bool else datetime.now().strftime("%Y-%m-%d")
+
+        self.upsert({
+            "phone_number": phone_number,
+            "bot_active": bool,
+            "date_bot_disabled": date_now
+        }, 'customers')
+
+    def search_fallback_customer(self, phone_number):
+        customers_fall_back = self.table_customers.select('*').eq('phone_number', phone_number).execute().data[0]
+
+        # Caso o FallBack tenha passado de 2 dias
+        if customers_fall_back['bot_active'] == False and customers_fall_back['date_bot_disabled'] != datetime.now().strftime("%Y-%m-%d"):
+            self.fallback_update_customer(phone_number, True)
+            customers_fall_back['bot_active'] = True
+
+        return customers_fall_back['bot_active']
+    
+    def search_block_bot(self, phone_number):
+        return self.table_customers.select('*').eq('phone_number', phone_number).execute().data
+    
+    
