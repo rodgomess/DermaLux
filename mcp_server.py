@@ -5,6 +5,7 @@ import functools
 import inspect
 import uuid
 from datetime import datetime
+import os
 
 from src.services.google_calendar import GoogleCalendar
 from src.services.supabase import SupabaseClient
@@ -220,4 +221,4 @@ async def call_attendant(
 
 
 if __name__ == "__main__":
-    mcp.run(transport="http", port=8002)
+    mcp.run(transport="http", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
