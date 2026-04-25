@@ -14,14 +14,13 @@ class ChatGpt():
     def request(self, input, history_chat):
 
         input_and_history =  self.create_history_chat(history_chat, input)
-
         resp = self.client.responses.create(
             model="gpt-4.1-mini",
             tools=[
                 {
                     "type": "mcp",
                     "server_label": "mcp_dermalux",
-                    "server_url": f"{self.MCP_SERVER_URL}/mcp/",
+                    "server_url": f"{self.MCP_SERVER_URL}/mcp",
                     "require_approval": "never",
                 },
             ],
@@ -65,7 +64,5 @@ Não poderá ser criado um evento quando:
 
 Antes de marcar a consulta informe o cliente do valor e da duração da consulta selecionada e pergunte o nome do cliente
 
-Horario de funcionamento
-Seg. às Sex. 08 as 11 e 13 as 18 horas
 Telefone do Cliente: {phone_number}
 """

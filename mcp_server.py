@@ -89,7 +89,7 @@ def logged_tool(mcp, *, name: str | None = None):
 
 
 logging.basicConfig(level=logging.INFO)
-mcp = FastMCP(name="Tools DermaLux", stateless_http=True)
+mcp = FastMCP(name="Tools DermaLux")
 google_calendar = GoogleCalendar()
 supabase = SupabaseClient()
 
@@ -221,4 +221,9 @@ async def call_attendant(
 
 
 if __name__ == "__main__":
-    mcp.run(transport="http", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    mcp.run(
+        transport="http", 
+        host="0.0.0.0", 
+        port=int(os.getenv("PORT", 8000)),
+        stateless_http=True
+    )

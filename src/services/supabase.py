@@ -1,7 +1,9 @@
-import supabase
+from supabase import create_client, Client
+import httpx
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from supabase.lib.client_options import SyncClientOptions
 
 class SupabaseClient():
     def __init__(self):
@@ -9,7 +11,18 @@ class SupabaseClient():
         SUPABASE_URL = os.getenv('SUPABASE_URL')
         SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
-        self.supabase = supabase.create_client(SUPABASE_URL, SUPABASE_KEY)
+        httpx_client = httpx.Client(
+            timeout=10.0,
+            verify=True,
+        )
+
+        self.supabase = create_client(
+            SUPABASE_URL,
+            SUPABASE_KEY,
+            options=SyncClientOptions(
+                httpx_client=httpx_client,
+            ),
+        )
         
         self.table_messages = self.supabase.table('messages')
         self.table_services = self.supabase.table('services')
@@ -45,7 +58,7 @@ class SupabaseClient():
 
         # Caso o FallBack tenha passado de 2 dias
         if customers_fall_back['bot_active'] == False and customers_fall_back['date_bot_disabled'] != datetime.now().strftime("%Y-%m-%d"):
-            self.fallback_update_customer(phone_number, True)
+            self.update_fallback_customer(phone_number, True)
             customers_fall_back['bot_active'] = True
 
         return customers_fall_back['bot_active']

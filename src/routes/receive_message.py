@@ -51,14 +51,15 @@ def process_request(phone_number: str, request_user):
 @receive_mensage_bp.route("/receive_mensage", methods=["POST"])
 def receive_mensage():
     data = request.json
+    
     hour_message = convert_unix_epoch(data['momment'])
-    phone_number = data['phone']
+    phone_number = data['connectedPhone']
 
     brasilia_tz = timezone(timedelta(hours=-3))
     
     seconds_since = (datetime.now(brasilia_tz) - hour_message).total_seconds()
 
-    bot_blocked = True
+    # bot_blocked = True
     customer = supabase.search_block_bot(phone_number)
     if len(customer) > 0:
         bot_blocked = customer[0]['bot_blocked']
