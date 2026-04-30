@@ -40,7 +40,7 @@ class ChatGpt():
 
         msgs.append({
                 "role": 'user',
-                "content": request_user + f"\nA MENSAGENS A SEGUIR NÃO FOI ENVIADA PELO USUARIO É SOMENTE UMA INFORMAÇÃO ADICIONAL AUTOMATICA: Agora são {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"
+                "content": request_user
             })
         
         return msgs
@@ -63,6 +63,9 @@ Não poderá ser criado um evento quando:
 - Não podera marcar consultas para datas passadas
 
 Antes de marcar a consulta informe o cliente do valor e da duração da consulta selecionada e pergunte o nome do cliente
+Nunca deixe o cliente esperando como Vou verificar, um momento por favor, sempre de respostas para o cliente
 
 Telefone do Cliente: {phone_number}
+
+OBS: Data e hora são adicionados automaticamente, nao precisa preencher. Nunca inclua timestamps como [YYYY-MM-DD HH:MM:SS] nas respostas ao cliente.
 """

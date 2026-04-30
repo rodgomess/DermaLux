@@ -124,7 +124,7 @@ async def create_calendar_event(
     )
 
     # return "Evento Criado"
-    return result
+    return result['message']
 
 
 @logged_tool(mcp, name="delete_calendar_event")
@@ -140,7 +140,7 @@ async def delete_calendar_event(
     - phone_number: Numero de telefone do cliente (obrigatorio)
 
     Retorno
-    - Um json com informacoe sobre o evento deletado
+    - Um json com informacoes sobre o evento deletado
     """
 
     if not id_event:
@@ -166,7 +166,7 @@ async def list_calendar_events(
     - filter: palavra-chave usada para filtrar os eventos, os filtros aplica-se aos campos de titulo, descrição e localizacao (Opcional)
 
     Retorno
-    - Uma lista com todos os eventos existentes
+    - Uma lista com todos os eventos existentes, caso retorno vazio quer dizer que nao existe nenhum evento
     """
 
     if not start:
@@ -224,6 +224,6 @@ if __name__ == "__main__":
     mcp.run(
         transport="http", 
         host="0.0.0.0", 
-        port=int(os.getenv("PORT", 8000)),
+        port=int(os.getenv("PORT", 8002)),
         stateless_http=True
     )

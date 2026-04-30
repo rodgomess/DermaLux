@@ -2,6 +2,8 @@ teste*
 credentials.json
 token.json
 
+dev-start.ps1
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

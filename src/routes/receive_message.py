@@ -1,11 +1,13 @@
 from flask import Blueprint, request, jsonify
 from dotenv import load_dotenv
 import os 
+from zoneinfo import ZoneInfo
 
 from src.services.zapi import ZApi
 from src.services.message_buffer import MessageBuffer
 from src.services.chatgpt import ChatGpt
 from src.services.supabase import SupabaseClient
+from src.services.google_calendar import GoogleCalendar
 
 from src.routes.utils import convert_unix_epoch
 from datetime import datetime, timezone, timedelta
@@ -18,8 +20,37 @@ supabase = SupabaseClient()
 agent = ChatGpt()
 zapi = ZApi()
 buffer = MessageBuffer()
+google_calendar = GoogleCalendar()
 
 MY_CHAT_LID = os.getenv('MY_CHAT_LID')
+
+def process_follow_up(phone_number, button_msg):
+
+    # Armazena a resposta do usuario
+    supabase.insert_msg(phone_number, "user", button_msg['message'])
+
+    # Confirmar consulta
+    if button_msg['message'].upper() == "CONFIRMAR":
+
+        response_msg = "Consulta confirmada, Obrigado!"
+        zapi.send_message(phone_number, response_msg)
+
+        # Armazena a resposta no historico
+        supabase.insert_msg(phone_number, "assistant", response_msg)
+
+    # Cancelar consulta
+    if button_msg['message'].upper() == "CANCELAR":
+        # Exclui o evento do calendario
+        google_calendar.delete_event(button_msg['buttonId'], phone_number)
+
+        response_msg = "Consulta cancelada, caso queira remarcar basta me pedir, Obrigado!"
+
+        # Armazena a resposta no historico
+        supabase.insert_msg(phone_number, "assistant", response_msg)
+
+        # Envia resposta para o cliente
+        zapi.send_message(phone_number, response_msg)
+
 
 def process_request(phone_number: str, request_user):
     """
@@ -36,6 +67,7 @@ def process_request(phone_number: str, request_user):
         history_msgs = supabase.search_messages(phone_number)
 
     if supabase.search_fallback_customer(phone_number):
+
         # Armazena a requisição atual do usuario
         supabase.insert_msg(phone_number, "user", request_user)
 
@@ -53,23 +85,41 @@ def receive_mensage():
     data = request.json
     
     hour_message = convert_unix_epoch(data['momment'])
-    phone_number = data['connectedPhone']
+    if data['phone'] == MY_CHAT_LID:
+        phone_number = data['connectedPhone']
+        
+    else:
+        phone_number = data['phone']
 
     brasilia_tz = timezone(timedelta(hours=-3))
     
     seconds_since = (datetime.now(brasilia_tz) - hour_message).total_seconds()
 
-    # bot_blocked = True
     customer = supabase.search_block_bot(phone_number)
     if len(customer) > 0:
         bot_blocked = customer[0]['bot_blocked']
+    else:
+        bot_blocked = True
 
-    # Recebendo as ultimas mensagens dentro de 5 minutos
     is_my_own_chat = (data['chatLid'] == MY_CHAT_LID and data['fromApi'] == False)
 
-    valid_message = "text" in data and seconds_since < 300
+    # Verificando se msg é valida para resposta
+    recent_msg = seconds_since < 300
+    is_not_group = data['isGroup'] == False
+    bot_blocked_in_user = bot_blocked == False
+    msg_from_me = data['fromMe'] == False
 
-    if  valid_message and data['isGroup'] == False and bot_blocked == False and ((data['fromMe'] == False) or is_my_own_chat):
+    is_text_msg = "text" in data
+    is_button_response_msg = "buttonsResponseMessage" in data
+
+    msg_valid = recent_msg and is_not_group and bot_blocked_in_user and ((msg_from_me) or is_my_own_chat)
+
+    # Confirmação Follow Up
+    if is_button_response_msg and msg_valid:
+        process_follow_up(phone_number, data['buttonsResponseMessage'])
+
+    # Assistente Inteligente
+    if  is_text_msg and msg_valid:
         message = data['text']['message']
         buffer.add(phone_number, message, process_request)
 

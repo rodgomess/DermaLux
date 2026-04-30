@@ -63,7 +63,7 @@ class GoogleCalendar():
                 q=text_filter,
                 timeMin=dt_start.isoformat(),
                 timeMax=dt_end.isoformat(),
-                maxResults=10,
+                maxResults=100,
                 singleEvents=True,
                 orderBy="startTime",
             )
@@ -84,7 +84,7 @@ class GoogleCalendar():
             "message": "Já existe um evento neste horario, selecione outro"
             }
         
-        description = f"""Cliente: {client_name}\nServiço: {service_name}\nTelefone: {phone_number}"""
+        description = f"""Cliente: {client_name}\nServiço: {service_name}\nTelefone: {phone_number}\nFollowUp: False"""
         
         summary = f"{service_name}, {client_name}"
         event = {
@@ -109,6 +109,20 @@ class GoogleCalendar():
             "message": "Evento criado com sucesso",
             "id_event": created.get('id')
         }
+    
+    def modify_follow_up_event(self, id_event):
+        
+        data_event = self.search_event_by_id(id_event)
+        new_description = data_event['description'].replace("FollowUp: False", "FollowUp: True")
+        self.service.events().patch(
+            calendarId="primary",
+            eventId=id_event,
+            body={
+                "description": new_description
+            }
+        ).execute()
+
+        return "Event description modified"
 
     def search_event_by_id(self, id_event):
         return self.service.events().get(calendarId="primary", eventId=id_event).execute()
