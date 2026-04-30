@@ -1,18 +1,19 @@
 from flask import Blueprint, request, jsonify
 from dotenv import load_dotenv
 import os 
-from zoneinfo import ZoneInfo
 
 from src.services.zapi import ZApi
 from src.services.message_buffer import MessageBuffer
 from src.services.chatgpt import ChatGpt
 from src.services.supabase import SupabaseClient
 from src.services.google_calendar import GoogleCalendar
+from src.services.logging_config import setup_logger, logger
 
 from src.routes.utils import convert_unix_epoch
 from datetime import datetime, timezone, timedelta
 
 load_dotenv()
+setup_logger()
 
 receive_mensage_bp = Blueprint("receive_mensage", __name__)
 
@@ -71,6 +72,7 @@ def process_request(phone_number: str, request_user):
         # Armazena a requisição atual do usuario
         supabase.insert_msg(phone_number, "user", request_user)
 
+        logger.info('Consultando agente')
         # Envia o historico e a requisicao atual para o agente
         response = agent.request(request_user, history_msgs)
 
@@ -79,9 +81,12 @@ def process_request(phone_number: str, request_user):
 
         zapi.send_message(phone_number, response.output_text)
 
+        logger.info('Enviando respota ao cliente')
+
 
 @receive_mensage_bp.route("/receive_mensage", methods=["POST"])
 def receive_mensage():
+    logger.info('Recebendo mensagem')
     data = request.json
     
     hour_message = convert_unix_epoch(data['momment'])
@@ -116,10 +121,12 @@ def receive_mensage():
 
     # Confirmação Follow Up
     if is_button_response_msg and msg_valid:
+        logger.info('Enviando resposta ao fallow up')
         process_follow_up(phone_number, data['buttonsResponseMessage'])
 
     # Assistente Inteligente
     if  is_text_msg and msg_valid:
+        logger.info('Mensagem de texto valida, enviando resposta do agente')
         message = data['text']['message']
         buffer.add(phone_number, message, process_request)
 

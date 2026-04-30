@@ -64,8 +64,8 @@ class FollowUp():
                 ]
             }
 
-        if data_event['FollowUp'] == "False":
-            self.process_message(event, data_event, buttons_dict)
+            if data_event['FollowUp'] == "False":
+                self.process_message(event, data_event, buttons_dict)
             
             
             

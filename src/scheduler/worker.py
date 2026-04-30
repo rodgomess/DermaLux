@@ -5,7 +5,7 @@ def main():
     schedular = BlockingScheduler()
     follow_up = FollowUp()
     follow_up.workflow()
-    schedular.add_job(follow_up.workflow, "interval", minutes=5)
+    schedular.add_job(follow_up.workflow, "interval", minutes=1)
 
     schedular.start()
 
