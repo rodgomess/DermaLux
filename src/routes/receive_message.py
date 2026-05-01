@@ -79,8 +79,8 @@ def process_request(phone_number: str, request_user):
         # Armazena a resposta do agente
         supabase.insert_msg(phone_number, "assistant", response.output_text)
 
-        zapi.send_message(phone_number, response.output_text)
-
+        response_api = zapi.send_message(phone_number, response.output_text)
+        logger.info(response_api)
         logger.info('Enviando respota ao cliente')
 
 
