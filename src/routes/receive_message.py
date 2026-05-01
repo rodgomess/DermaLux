@@ -80,8 +80,8 @@ def process_request(phone_number: str, request_user):
         supabase.insert_msg(phone_number, "assistant", response.output_text)
 
         response_api = zapi.send_message(phone_number, response.output_text)
-        logger.info(response_api)
-        logger.info('Enviando respota ao cliente')
+        logger.info("ZAPI status=%s body=%s", response.status_code, response.text)
+        logger.info(f'Enviando respota para telefone {phone_number}')
 
 
 @receive_mensage_bp.route("/receive_mensage", methods=["POST"])
