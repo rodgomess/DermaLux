@@ -75,12 +75,13 @@ def process_request(phone_number: str, request_user):
         logger.info('Consultando agente')
         # Envia o historico e a requisicao atual para o agente
         response = agent.request(request_user, history_msgs)
+        logger.info("OPENAI RESPONSE: %s", response.model_dump_json(indent=2))
 
         # Armazena a resposta do agente
         supabase.insert_msg(phone_number, "assistant", response.output_text)
 
         response_api = zapi.send_message(phone_number, response.output_text)
-        logger.info(f'Reposta agente: {response_api.text}')
+        logger.info(f'Reposta agente: {response.output_text}')
         logger.info("ZAPI status=%s body=%s", response_api.status_code, response_api.text)
         logger.info(f'Enviando respota para telefone {phone_number}')
 
